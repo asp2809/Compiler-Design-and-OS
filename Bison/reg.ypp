@@ -1,0 +1,123 @@
+
+
+%{
+#include <stdio.h>
+#include <iostream>
+#include <string.h>
+using namespace std;
+int yylex (void);
+void yyerror(char const *s);
+#define YYDEBUG 1
+int success = 1;
+%}
+
+%locations
+
+
+%union { 
+int integer ; 
+float fc ; 
+char *string;
+}
+
+%token <string> STR IF ELSE PRINT FOR DO NOP READ THEN ID COMMENT RELATIONAL_OP
+%token <integer> IC INT
+%token <fc> FC REAL
+%define parse.error verbose
+
+
+
+
+%left '|'
+%left '&'
+%left '~'
+
+%left '+' '-'
+%left '*' '/'
+
+%start p
+
+%%
+
+p: dl sl
+    ;
+
+dl: d ';' dl
+    | %empty
+    ;
+
+d: ty vl
+    ;
+
+ty: INT
+    | REAL
+    ;
+
+vl: vl ',' ID
+    | ID
+    ;
+
+sl: s sl                
+    | s                
+    ;
+
+s: as                   
+    | is                
+    | ls                
+    | ios               
+    | NOP               
+    ;
+
+as: ID '=' e               
+    ;
+
+is: IF be THEN sl ELSE sl ';'   
+    ;
+
+ls: FOR be DO sl ';'        
+    ;
+
+ios: PRINT pe
+    | READ ID 
+    ;
+
+pe: e                      
+    | STR                   
+    ;
+
+be: be '|' be               
+    | be '&' be             
+    | '~' be                
+    | '(' be ')'            
+    | re                    
+    ;
+
+re:  e RELATIONAL_OP e
+    ;
+
+e:    e '+' e            
+    | e '-' e          
+    | e '*' e             
+    | e '/' e               
+    | '(' e ')'             
+    | ID
+    | IC               
+    | FC                   
+    ;
+
+%%
+
+int main(){
+    yyparse();
+    if(success){
+        cout<< "Parsing Successful" << endl;
+        return 0;
+    }
+    cout << "Parsing Failed"<< endl;   
+}
+
+void yyerror(char const *s) {
+    extern int yylineno;
+    cerr << s <<" at line No.:"<< yylineno <<endl;
+    success = 0;
+}
